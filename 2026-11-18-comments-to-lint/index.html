@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>註解變 lint 規則</title>
+<meta name="description" content="把 code 裡「請不要這樣做」的註解，變成工具會擋的 lint 規則。">
+<style>
+:root{--bg:#fbfaf7;--fg:#1f1f1c;--muted:#6b6a64;--line:#e4e1d8;--card:#fff;--accent:#2d6cb4;--codebg:#f3f1ec;--bad:#9a3b2a;--good:#2f6f4f}
+@media (prefers-color-scheme:dark){:root{--bg:#171715;--fg:#ecebe6;--muted:#a3a198;--line:#2e2d29;--card:#1f1f1c;--accent:#7fb0e8;--codebg:#232320;--bad:#e59a86;--good:#8fd1ac}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.75 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
+main{max-width:780px;margin:0 auto;padding:56px 16px 80px}
+h1{font-size:2rem;line-height:1.3;margin:0 0 8px}
+.meta{color:var(--muted);font-size:.9rem}
+.lede{font-size:1.25rem;margin:28px 0;padding:20px 22px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px}
+h2{font-size:1.3rem;margin:48px 0 12px;padding-top:8px;border-top:1px solid var(--line)}
+h3{font-size:1.05rem;margin:28px 0 8px}
+pre{background:var(--codebg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:.85rem;line-height:1.55;margin:8px 0}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+p code,li code{background:var(--codebg);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:.88em}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+@media (max-width:560px){.vs{grid-template-columns:1fr}}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.box b{display:block;margin-bottom:6px}
+.box.bad b{color:var(--bad)}.box.good b{color:var(--good)}
+.box p{margin:0;color:var(--muted);font-size:.95rem}
+.ex{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 18px 12px;margin:16px 0}
+.from{color:var(--muted);font-size:.95rem;margin:4px 0}
+ol li,ul li{margin:6px 0}
+.q{font-size:1.15rem;padding:18px 22px;border:1px dashed var(--accent);border-radius:8px;margin:20px 0}
+a{color:var(--accent)}
+footer{margin-top:56px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+<main>
+<h1>把「請不要這樣做」的註解變成 lint 規則</h1>
+<div class="meta">十分鐘分享 · 2026-11</div>
+
+<p class="lede">讓工具記住規矩，讓人專心做判斷。</p>
+
+<h2>註解只在剛好被讀到時有用</h2>
+<p>我們都看過這種註解：「這裡不要直接用 fetch」「這個元件不要在 client 用」「改這裡要記得改那裡」。它們是寫給人看的提醒，新人不一定讀到，趕時間的時候也不一定讀到。</p>
+<div class="vs">
+<div class="box bad"><b>註解</b><p>是願望。違反了沒人知道，要等 review 或出事才發現。</p></div>
+<div class="box good"><b>lint 規則</b><p>是規則。存檔或 CI 當下就知道，錯誤訊息直接說錯在哪、為什麼。</p></div>
+</div>
+<p>不管 code 是人寫的還是工具產生的，lint 都在寫的當下回饋；review 的人少記一條要提醒的事，注意力留給真正需要判斷的地方。</p>
+
+<h2>三個例子</h2>
+<p>格式都一樣：原本的註解 → 對應的規則 → 把註解裡的理由搬進 <code>message</code>。</p>
+
+<div class="ex">
+<h3>1. 「不要直接用 fetch，請用 apiClient」</h3>
+<pre><code>// eslint.config.js
+rules: {
+  'no-restricted-globals': ['error', {
+    name: 'fetch',
+    message: '請用 apiClient，統一處理 token 和錯誤。',
+  }],
+}</code></pre>
+</div>
+
+<div class="ex">
+<h3>2. 「不要整包 import lodash」</h3>
+<pre><code>rules: {
+  'no-restricted-imports': ['error', {
+    paths: [{
+      name: 'lodash',
+      message: '請用 lodash/xxx 單獨 import，避免整包打進來。',
+    }],
+  }],
+}</code></pre>
+</div>
+
+<div class="ex">
+<h3>3. 「這個模組只能在 server 用」</h3>
+<pre><code>// server 專用的檔案最上面加一行
+import 'server-only'</code></pre>
+<p class="from">Next.js 的做法：client 端一 import 就在 build 時報錯，比註解可靠。</p>
+</div>
+
+<p><b>重點：</b><code>message</code> 寫的是「為什麼」，不是只寫「不准」。看到錯誤的人就知道理由，不用去問。</p>
+
+<h2>怎麼開始</h2>
+<ol>
+<li>搜 code 裡的「不要」「請勿」「記得」「DO NOT」，挑一條最常被踩的。</li>
+<li>先設 <code>warn</code>，不擋 build，觀察一兩週會跳幾個地方。</li>
+<li>清乾淨再改成 <code>error</code>。</li>
+<li>一次一條。需要看情況判斷的，就留在註解。</li>
+</ol>
+
+<div class="q">帶回去的問題：我們 code 裡有沒有哪一句「請不要這樣做」，是你被踩過、或 review 時重複提醒過的？</div>
+
+<h2>延伸</h2>
+<ul>
+<li>規則更細的寫法：ESLint 的 <code>no-restricted-syntax</code> 用選擇器擋特定寫法，不用自己寫 plugin。</li>
+<li>能用 TypeScript 型別擋的，比 lint 更早擋住。</li>
+</ul>
+
+<footer>
+延伸觀看：Lauren Tan（poteto）〈<a href="https://www.youtube.com/watch?v=O_zcc6Xl12g">All Code Is Slop (Except Mine)</a>〉，AI Engineer，2026，「Replacing comments with lint rules」一段（6:56 起）。本頁為個人整理，範例為通用寫法。
+</footer>
+</main>
+</body>
+</html>
