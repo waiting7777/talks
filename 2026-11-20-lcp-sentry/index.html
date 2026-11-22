@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LCP 和 Sentry 告警</title>
+<meta name="description" content="上線後，怎麼知道使用者等了多久？LCP 是什麼、Sentry 怎麼記錄效能、關鍵流程打點、設定不吵的告警。">
+<style>
+:root{--bg:#fbfaf7;--fg:#1f1f1c;--muted:#6b6a64;--line:#e4e1d8;--card:#fff;--accent:#4f46b8;--codebg:#f3f1ec;--bad:#9a3b2a;--ok:#9a6b12;--good:#2f6f4f}
+@media (prefers-color-scheme:dark){:root{--bg:#141320;--fg:#ecebf2;--muted:#a3a1b4;--line:#2c2a3d;--card:#1c1b2a;--accent:#a49cf5;--codebg:#21203a;--bad:#e59a86;--ok:#e3c27a;--good:#8fd1ac}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.8 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
+main{max-width:800px;margin:0 auto;padding:48px 16px 80px}
+h1{font-size:2.1rem;line-height:1.3;margin:24px 0 8px}
+.meta{color:var(--muted);font-size:.95rem}
+.hero{margin:0 -16px;border-radius:0}
+@media (min-width:832px){.hero{margin:0;border-radius:12px}}
+h2{font-size:1.4rem;margin:56px 0 14px;padding-top:12px;border-top:1px solid var(--line)}
+h2 .n{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:.4em}
+h3{font-size:1.1rem;margin:32px 0 8px}
+.pull{font-size:1.15rem;font-weight:600;margin:20px 0;padding:16px 20px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px}
+pre{background:var(--codebg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:.85rem;line-height:1.55;margin:10px 0}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+p code,li code{background:var(--codebg);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:.88em}
+.scale{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+@media (max-width:560px){.scale{grid-template-columns:1fr}}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px}
+.box b{display:block;font-size:1.15rem}
+.box span{color:var(--muted);font-size:.92rem}
+.good b{color:var(--good)}.ok b{color:var(--ok)}.bad b{color:var(--bad)}
+figure{margin:22px 0}
+figure img{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;display:block}
+.hero img{border:0;border-radius:inherit}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:8px}
+.note{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:16px 0;font-size:.97rem}
+.steps{list-style:none;padding:0;counter-reset:s}
+.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px 12px 52px;margin:10px 0;position:relative}
+.steps li::before{content:counter(s);position:absolute;left:16px;top:12px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--bg);font-weight:700;font-size:.85rem;display:grid;place-items:center}
+.steps li b{display:block}
+ul li,ol li{margin:6px 0}
+.q{font-size:1.15rem;padding:20px 22px;border:1px dashed var(--accent);border-radius:8px;margin:24px 0;font-weight:600}
+a{color:var(--accent)}
+footer{margin-top:56px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px;line-height:1.7}
+</style>
+</head>
+<body>
+<main>
+<figure class="hero"><img src="cover-slow.jpg" alt="插圖：儀表、警示符號和放大鏡下標著 SLOW 的曲線" width="1600" height="1065"></figure>
+<h1>上線後，怎麼知道使用者等了多久？</h1>
+<div class="meta">10 分鐘技術分享｜LCP 與 Sentry</div>
+
+<h2><span class="n">01</span>起因：不會報錯的停頓</h2>
+<p>今天想分享一個問題：<b>當使用者覺得系統很慢，但系統本身沒有任何錯誤時，我們該怎麼辦？</b></p>
+<p>最近在 React 19 和 Next.js 的開發過程中，遇到一個比較特別的狀況。React 19 對 stylesheet 有新的處理機制：當元件需要新的 stylesheet，而 CSS 還沒載入完成時，React 可能會延後 commit，確保畫面不會先出現沒有樣式的內容。</p>
+<p>這個設計本身是合理的，但在某些 Next.js 的頁面轉換情境下，使用者感受到的就是：點了連結，畫面卻停了一下。</p>
+<p>問題是，這整個過程沒有 exception，也不一定會留下錯誤 log。從錯誤監控來看，一切正常；從使用者的角度來看，系統就是變慢了。</p>
+<p class="pull">我們平常很重視系統有沒有壞掉，卻不一定知道系統有沒有變難用。</p>
+<p>所以今天想介紹的是：如何透過 LCP 和 Sentry，把這些原本看不到的效能問題，變成可以觀察、追蹤，甚至主動告警的數據。</p>
+
+<h2><span class="n">02</span>LCP 是什麼？</h2>
+<p>LCP，全名 Largest Contentful Paint。它衡量的是：從頁面開始載入，到畫面中最大的主要內容元素出現，花了多少時間。這個元素可能是主視覺圖片、標題，或一大塊文字。</p>
+<p>它的價值在於，我們不只是看瀏覽器有沒有開始工作，而是看使用者什麼時候真正看到主要內容。</p>
+<div class="scale">
+<div class="box good"><b>≤ 2.5 秒</b><span>Good，表現良好</span></div>
+<div class="box ok"><b>2.5 – 4 秒</b><span>Needs Improvement</span></div>
+<div class="box bad"><b>&gt; 4 秒</b><span>Poor，表現不佳</span></div>
+</div>
+<p><b>看 p75，不只看平均值。</b>p75 的意思是 75% 的真實使用者，LCP 落在這個時間以內。平均值很容易被少數極端數據影響，也可能掩蓋一部分使用者的糟糕體驗。</p>
+<p>同一組 Core Web Vitals 還有兩個：</p>
+<ul>
+<li><b>INP</b>：使用者操作之後，畫面多久才有反應。</li>
+<li><b>CLS</b>：畫面在載入過程中，有沒有發生不預期的位移。</li>
+</ul>
+<p>Lighthouse 測的是特定環境下的實驗室數據；Sentry 收集的是真實使用者的裝置、網路與瀏覽情況。兩者都重要，但要知道正式環境的使用者過得好不好，真實使用者數據更有參考價值。</p>
+
+<figure>
+<img src="lcp-example.png" alt="一個網站首頁，紅框標出 LCP 元素是下方的一段文字，標籤寫 LCP 268 ms" width="1800" height="1125" loading="lazy">
+<figcaption>我自己 side project 的首頁。直覺會以為最大的圖片是 LCP 元素，實際量出來是下面那段文字。（本機量一次的實驗室數據）</figcaption>
+</figure>
+<p class="pull">LCP 不要用猜的，要實際測量。</p>
+
+<h3>LCP 慢，時間究竟花在哪裡？</h3>
+<p>LCP 數字不好看時，下一步不是直接去壓縮圖片或改程式，而是先搞清楚時間花在哪裡。大致可以拆成四段：</p>
+<ol class="steps">
+<li><b>TTFB</b>等待 server 回傳第一個 byte。</li>
+<li><b>資源載入前的等待</b>瀏覽器多久才發現需要載入這個資源。</li>
+<li><b>資源載入時間</b>圖片、CSS 或字型本身下載花了多久。</li>
+<li><b>Element Render Delay</b>資源已經準備好，但元素還沒真正畫出來。例如 JavaScript 還在執行，或 CSS 擋住了畫面更新。</li>
+</ol>
+<p>不需要死背四個名詞，重點是：<b>看到 LCP 變慢時，先找出是哪個階段變慢，而不是直接猜問題在哪裡。</b>這也是後面 Sentry Trace 最有價值的地方。</p>
+<div class="note"><b>補充：</b>傳統的 LCP 主要針對完整頁面載入。Sentry JavaScript SDK v11 開始預設支援 SPA soft navigation 的 Web Vitals（LCP、CLS、INP），但需要瀏覽器支援 Soft Navigations API（目前是 Chromium 系），而且哪些換頁算 soft navigation 由瀏覽器決定。能不能觀察站內換頁的 LCP，要看 SDK 版本和瀏覽器。</div>
+
+<h2><span class="n">03</span>Sentry 怎麼記錄這些數據？</h2>
+<figure class="hero"><img src="tracing.jpg" alt="插圖：程式碼資料流經過多個節點和防護模組，流向伺服器群" width="1600" height="867" loading="lazy"></figure>
+<p>要開始收集這些資料，不需要自己從頭實作效能監控。開啟 Browser Tracing 之後，Sentry 就能收集頁面載入、navigation，以及瀏覽器支援的 Web Vitals。</p>
+<pre><code>Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  release: process.env.NEXT_PUBLIC_RELEASE,
+  environment: 'production',
+  integrations: [
+    Sentry.browserTracingIntegration(),
+  ],
+  tracesSampleRate: 0.1,
+});</code></pre>
+<ul>
+<li><b><code>release</code></b>：把效能數據和程式版本連起來。部署新版本後，可以直接比較新舊版本的 p75，看這次更新有沒有讓效能變差。</li>
+<li><b><code>tracesSampleRate</code></b>：0.1 代表抽樣 10%，避免流量大時監控成本過高。</li>
+<li><b><code>environment</code></b>：區分 production、staging，避免把測試環境的數據混在一起。</li>
+</ul>
+
+<h3>Dashboard：先看整體，再找異常</h3>
+<figure>
+<img src="https://docs.sentry.io/mdx-images/frontend-overview-dash-ECVGD6RW.png" alt="Sentry 前端總覽：Performance Score 圓環、頁面耗時 p50/p75/p95、最花時間的檔案和 API" width="1352" height="762" loading="lazy">
+<figcaption>整體效能分數、各項 Web Vitals、p50／p75／p95，以及哪些資源花最多時間。（圖：Sentry 官方文件，示範資料）</figcaption>
+</figure>
+<p>這個畫面的用途不是直接找出程式碼的問題，而是先回答：<b>最近整體效能有沒有變差？哪些頁面最值得優先處理？</b></p>
+
+<h3>Trace：找到真正卡住的地方</h3>
+<figure>
+<img src="https://docs.sentry.io/mdx-images/trace-view-JIHR44C4.png" alt="Sentry trace view：上方是這一筆的 LCP、FCP、CLS、TTFB，下方時間軸列出 browser.request、resource.link、resource.script 等 span" width="1600" height="876" loading="lazy">
+<figcaption>單筆 trace 的時間軸。這張官方示範圖裡最長的區段是 <code>browser.request</code>，問題主要在等 server，而不是前端渲染。（圖：Sentry 官方文件，Next.js 示範資料）</figcaption>
+</figure>
+<p>某個頁面 LCP 特別慢，就點進單筆 trace，看不同操作和資源的耗時：</p>
+<ul>
+<li><code>resource.css</code>：CSS 載入</li>
+<li><code>resource.script</code>：JavaScript 載入</li>
+<li><code>resource.img</code>：圖片載入</li>
+<li><code>ui.long-task</code>：主執行緒長時間被占用</li>
+</ul>
+<p>透過這些資訊，就能判斷是 server 回應太慢、CSS 載入太久，還是 JavaScript 阻塞了主執行緒。</p>
+<p class="pull">Alert 告訴我們哪裡變慢，Trace 幫助我們理解為什麼變慢。</p>
+
+<h2><span class="n">04</span>自動監控不夠，關鍵流程要自己打點</h2>
+<p>Sentry 自動收集的主要是頁面和瀏覽器層級的效能。但有些操作的重要性，不一定能從 LCP 或 INP 看出來：</p>
+<ul>
+<li>使用者送出表單，到看到結果花了多久。</li>
+<li>搜尋或篩選之後，列表多久才更新。</li>
+<li>進入頁面之後，權限檢查多久才完成。</li>
+</ul>
+<p>這些更接近業務流程本身，可以用自訂 span 額外記錄：</p>
+<pre><code>await Sentry.startSpan(
+  {
+    name: 'order.submit',
+    op: 'ui.action',
+  },
+  async () =&gt; {
+    await submitOrder(data);
+  }
+);</code></pre>
+<p>原則是<b>不要每個 function 都加 span</b>。只挑三到五個真正重要、變慢時使用者會有感的操作。監控資料太多，反而增加成本，也讓真正重要的問題更難被發現。</p>
+
+<h2><span class="n">05</span>設定 Alert：不要等使用者來抱怨</h2>
+<p>如果只是把數據收集起來，等有人想到才進去看 Dashboard，那還是被動監控。真正有價值的是：在使用者發現問題之前，我們就收到通知。</p>
+<ol class="steps">
+<li><b>關鍵頁面的 LCP</b>p75 超過 2.5 秒持續一段時間發 Warning；超過 4 秒升級成 Critical。</li>
+<li><b>站內換頁與關鍵操作</b>navigation 或自訂 span 的 p95，超過平常基準的 1.5 倍就通知團隊。</li>
+<li><b>新版本上線後的效能退化</b>每次部署後觀察兩小時，比較新版本和上一版的 p75，明顯退步就及早發現。</li>
+</ol>
+<p>這些門檻只是初始範例，實際設定要考慮流量、樣本數和歷史基準。不確定門檻怎麼訂，也可以用 Sentry 的 Anomaly Detection，讓系統依平常的數據變化判斷異常。</p>
+
+<h3>讓 Alert 不要變成噪音</h3>
+<figure>
+<img src="https://docs.sentry.io/mdx-images/alert-details-3IMBBABN.png" alt="Sentry alert 詳情頁：14 天內觸發 123 次，每 10 分鐘一次" width="1161" height="645" loading="lazy">
+<figcaption>14 天觸發 123 次，幾乎每 10 分鐘通知一次。這種告警響到第三天，大家大概就會直接靜音。（圖：Sentry 官方文件）</figcaption>
+</figure>
+<ul>
+<li>看 p75 或 p95，不要因為單筆慢請求就告警。</li>
+<li>設定最少樣本數，避免低流量時被少數異常值影響。</li>
+<li>設定持續時間，不要因為短暫波動就通知。</li>
+<li>通知發到團隊頻道，讓相關的人都看得到。</li>
+<li>先觀察一週的正常數據，再設定合理門檻。</li>
+</ul>
+<p class="pull">監控的目的不是讓大家收到更多通知，而是讓真正重要的問題不會被忽略。</p>
+
+<h2>結尾</h2>
+<figure class="hero"><img src="closing.jpg" alt="插圖：戴耳機的工程師在夜裡看著螢幕上的效能曲線" width="1600" height="1016" loading="lazy"></figure>
+<p>平常的錯誤監控，主要是確保系統沒有壞掉。但一個沒有錯誤的系統，不代表對使用者來說是好用的。</p>
+<p>透過 LCP 和 Core Web Vitals，我們可以量化使用者的體驗；透過 Sentry 的 tracing 和自訂 span，可以進一步定位問題；最後搭配 alert，讓問題在使用者抱怨之前就被發現。</p>
+<p>這套機制不一定要一次做到很完整。可以先從一兩個關鍵頁面開始，收集一週的數據，觀察正常的效能基準，再慢慢增加告警和自訂監控。</p>
+<div class="q">如果今天你負責的功能突然變慢，哪一個操作是使用者最先會來抱怨的？<br>那個地方，就是最值得開始做效能監控的第一個地方。</div>
+
+<footer>
+參考：<a href="https://web.dev/articles/lcp">web.dev: LCP</a> · <a href="https://web.dev/articles/optimize-lcp">web.dev: Optimize LCP</a> · <a href="https://web.dev/articles/inp">web.dev: INP</a> · <a href="https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/integrations/webvitals/">Sentry: Web Vitals integration</a> · <a href="https://blog.sentry.io/measuring-soft-navigation-web-vitals/">Sentry blog: Soft navigation web vitals</a> · <a href="https://docs.sentry.io/product/alerts/">Sentry alerts</a><br>
+Sentry 截圖取自 <a href="https://docs.sentry.io/">Sentry 官方文件</a>，內容為官方示範資料。介面名稱依版本可能不同（例如 Alerts / Monitors）。
+</footer>
+</main>
+</body>
+</html>
