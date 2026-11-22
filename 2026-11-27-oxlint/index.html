@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>oxlint 導入順序</title>
+<meta name="description" content="lint 跑太慢、錯誤太多，大家就不看了。oxlint 是什麼、在 Next.js side project 上的實測，以及大專案和 ESLint 並行導入的順序。">
+<style>
+:root{--bg:#fbfaf7;--fg:#1f1f1c;--muted:#6b6a64;--line:#e4e1d8;--card:#fff;--accent:#4f46b8;--codebg:#f3f1ec;--good:#2f6f4f}
+@media (prefers-color-scheme:dark){:root{--bg:#141320;--fg:#ecebf2;--muted:#a3a1b4;--line:#2c2a3d;--card:#1c1b2a;--accent:#a49cf5;--codebg:#21203a;--good:#8fd1ac}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.8 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
+main{max-width:800px;margin:0 auto;padding:48px 16px 80px}
+.back{font-size:.9rem}
+h1{font-size:2.1rem;line-height:1.3;margin:20px 0 8px}
+.meta{color:var(--muted);font-size:.95rem}
+h2{font-size:1.4rem;margin:56px 0 14px;padding-top:12px;border-top:1px solid var(--line)}
+h2 .n{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:.4em}
+h3{font-size:1.1rem;margin:32px 0 8px}
+.pull{font-size:1.15rem;font-weight:600;margin:20px 0;padding:16px 20px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px}
+pre{background:var(--codebg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:.85rem;line-height:1.55;margin:10px 0}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+p code,li code,td code{background:var(--codebg);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:.88em}
+.tbl{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:.95rem}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{color:var(--muted);font-weight:600;font-size:.88rem}
+td.num{font-variant-numeric:tabular-nums;font-weight:700}
+td.fast{color:var(--good)}
+.note{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:16px 0;font-size:.97rem}
+.steps{list-style:none;padding:0;counter-reset:s}
+.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px 12px 52px;margin:10px 0;position:relative}
+.steps li::before{content:counter(s);position:absolute;left:16px;top:12px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--bg);font-weight:700;font-size:.85rem;display:grid;place-items:center}
+.steps li b{display:block}
+.steps pre{margin:8px 0 2px}
+ul li{margin:6px 0}
+.q{font-size:1.15rem;padding:20px 22px;border:1px dashed var(--accent);border-radius:8px;margin:24px 0;font-weight:600}
+a{color:var(--accent)}
+footer{margin-top:56px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px;line-height:1.7}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../">← 技術分享合集</a>
+<h1>lint 跑太慢、錯誤太多，可以試試 oxlint</h1>
+<div class="meta">10 分鐘技術分享｜2026-11-27</div>
+
+<h2><span class="n">01</span>lint 為什麼沒人看</h2>
+<p>打開一個放了幾年的專案，跑一次 lint，等很久，跑出來幾千個 warning。看到那個數字，就沒人想修了。</p>
+<p>lint 本來是要幫我們擋問題，可是跑太慢、太吵，大家就開始跳過它。</p>
+<p class="pull">重點不是換工具，是讓 lint 重新有人看。</p>
+
+<h2><span class="n">02</span>oxlint 是什麼</h2>
+<ul>
+<li><b>Rust 寫的 JS／TS linter</b>，Oxc 專案出品。官方說比 ESLint 快 50 到 100 倍。</li>
+<li><b>內建約 870 條規則</b>：ESLint 核心、TypeScript、React、Next.js、import、jsx-a11y、unicorn、jest／vitest，不用另外裝 plugin。</li>
+<li><b>預設只開 <code>correctness</code></b>：幾乎確定是 bug 的規則。其他類別（<code>suspicious</code>、<code>perf</code>、<code>style</code>、<code>pedantic</code>）自己一類一類打開。</li>
+<li><b>設定檔 <code>.oxlintrc.json</code></b>，格式接近 ESLint v8。</li>
+<li><b>型別感知規則</b>（例如沒有 await 的 promise）用 Go 寫的新版 TypeScript 編譯器（tsgo）。</li>
+</ul>
+<p class="pull">最大的差別不是快，是預設很安靜：只講「這幾乎一定是 bug」的事。</p>
+
+<h2><span class="n">03</span>實測：一個 Next.js side project</h2>
+<p>Next.js 16，313 個檔案，在自己電腦上跑（Apple Silicon，oxlint 1.94.0）。</p>
+<div class="tbl"><table>
+<thead><tr><th></th><th>ESLint<br>eslint-config-next</th><th>oxlint 預設</th><th>oxlint + React／Next.js／a11y</th></tr></thead>
+<tbody>
+<tr><th>規則數</th><td>Next.js 官方推薦</td><td class="num">96</td><td class="num">183</td></tr>
+<tr><th>時間</th><td class="num">10.6 秒</td><td class="num fast">約 1.4 秒</td><td class="num fast">約 1.4 秒</td></tr>
+<tr><th>抓到</th><td>42 個，大多是 <code>any</code></td><td>13 個 warning</td><td>39 個 warning</td></tr>
+</tbody>
+</table></div>
+<p>oxlint 的 1.4 秒裡，真正 lint 只花 0.11 秒，其餘是 node 啟動。一秒的工具可以每次存檔都跑；十秒的，大家會等 CI。</p>
+<p>兩邊抓到的不完全一樣：ESLint 抓很多 <code>any</code>，oxlint 抓到 a11y 和「<code>&lt;a&gt;</code> 應該換成 <code>&lt;Link&gt;</code>」。不是誰比較好，是規則不一樣。</p>
+
+<h3>一個小插曲</h3>
+<p>第一次跑 ESLint 花了 <b>185 秒</b>，報了 <b>27,385 個問題</b>。仔細看，是它掃到了另一個 git worktree 裡的檔案，那兩萬多個都不是這個專案的 code。排除之後，剩 42 個。</p>
+<p class="pull">lint 錯誤很多的時候，第一步先確認它在掃什麼。</p>
+
+<h2><span class="n">04</span>大專案怎麼導入：和 ESLint 並行</h2>
+<p>不要一次換掉 ESLint，兩個一起跑。這也是 oxlint 官方建議的順序。</p>
+<ol class="steps">
+<li><b>用工具轉設定</b>
+<pre><code>npx @oxlint/migrate</code></pre>
+ESLint 9 以上的 flat config 可以直接轉；舊的 <code>.eslintrc</code> 先用 <code>@eslint/migrate-config</code> 轉成 flat config。</li>
+<li><b>先跑 oxlint，再跑 ESLint</b>
+<pre><code>"lint": "oxlint &amp;&amp; eslint ."</code></pre></li>
+<li><b>ESLint 關掉重複的規則</b>，只留 oxlint 還沒有的部分。
+<pre><code>// eslint.config.mjs
+import oxlint from 'eslint-plugin-oxlint'
+
+export default [
+  ...nextVitals,
+  ...(await oxlint.buildFromConfigFile('./.oxlintrc.json')), // 放最後
+]</code></pre></li>
+<li><b>類別一次開一類</b>：先 warn，觀察一兩週，清乾淨再改 error。</li>
+<li><b>CI 先只擋新的 code</b>：舊的錯誤分批修，第一個 PR 不要改幾百個檔案。</li>
+</ol>
+
+<h3>Next.js 專案的設定</h3>
+<pre><code>{
+  "plugins": ["typescript", "unicorn", "oxc", "react", "nextjs", "jsx-a11y", "import"],
+  "categories": { "correctness": "error" },
+  "ignorePatterns": [".next/**", "out/**"]
+}</code></pre>
+<div class="note"><b>注意：</b>寫了 <code>plugins</code> 就會蓋掉預設的 plugin，所以預設的 <code>typescript</code>、<code>unicorn</code>、<code>oxc</code> 要自己寫回去。</div>
+<p class="pull">先修 correctness：那些幾乎都是真的 bug，修了有感，PR 也好審。</p>
+
+<h2><span class="n">05</span>什麼時候不要換</h2>
+<ul>
+<li><b>有自己寫的 ESLint 規則</b>：oxlint 的 JS plugin 還是 alpha，不是每個 ESLint plugin 都能跑。</li>
+<li><b>依賴的規則 oxlint 還沒有</b>：官方也說，卡住的話留在 ESLint 是正常的選擇。</li>
+</ul>
+<p>所以建議是<b>並行，不是替換</b>：oxlint 擋大部分、跑得快；ESLint 留給 oxlint 還沒有的那幾條。</p>
+<div class="note"><b>補充：</b>TypeScript 7 之後，<code>typescript-eslint</code> 還需要 TypeScript 6 的 API，Next.js 文件教大家讓兩個版本並存。oxlint 的型別規則直接用 tsgo，沒有這個問題。另外 Next.js 16 已經移除 <code>next lint</code>，本來就要動一次 lint 設定。</div>
+
+<h2>結尾</h2>
+<p class="q">你上一次認真看 lint 的 warning 是什麼時候？如果答案是「很久了」，可能不是大家不在乎，是 lint 太慢、太吵了。</p>
+
+<footer>
+參考資料：
+<a href="https://oxc.rs/docs/guide/usage/linter.html">Oxlint</a>、
+<a href="https://oxc.rs/docs/guide/usage/linter/config.html">Configuration</a>、
+<a href="https://oxc.rs/docs/guide/usage/linter/migrate-from-eslint.html">Migrate from ESLint</a>、
+<a href="https://oxc.rs/docs/guide/usage/linter/rules.html">Rules</a>、
+<a href="https://github.com/oxc-project/eslint-plugin-oxlint">eslint-plugin-oxlint</a>、
+<a href="https://nextjs.org/docs/app/api-reference/config/eslint">Next.js ESLint Plugin</a><br>
+實測數字為作者在自己電腦上量測（2026-11-22），不同專案和機器會不同。
+</footer>
+</main>
+</body>
+</html>
