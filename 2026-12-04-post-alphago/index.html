@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>後 AlphaGo 時代</title>
+<meta name="description" content="AlphaGo 之後十年，職業棋士怎麼跟 AI 相處：學 AI 棋譜、看勝率表、定式被改寫、AI 作弊、讓二子贏 KataGo，一件一件對照到軟體開發。">
+<style>
+:root{--bg:#fbfaf7;--fg:#1f1f1c;--muted:#6b6a64;--line:#e4e1d8;--card:#fff;--accent:#4f46b8;--go:#2b2a27;--soft:#f3f1ec}
+@media (prefers-color-scheme:dark){:root{--bg:#141320;--fg:#ecebf2;--muted:#a3a1b4;--line:#2c2a3d;--card:#1c1b2a;--accent:#a49cf5;--go:#ecebf2;--soft:#21203a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.8 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
+main{max-width:820px;margin:0 auto;padding:48px 16px 80px}
+.back{font-size:.9rem}
+h1{font-size:2.1rem;line-height:1.3;margin:20px 0 8px}
+.meta{color:var(--muted);font-size:.95rem}
+h2{font-size:1.4rem;margin:56px 0 14px;padding-top:12px;border-top:1px solid var(--line)}
+h2 .n{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:.4em}
+.pull{font-size:1.15rem;font-weight:600;margin:20px 0;padding:16px 20px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+@media (max-width:600px){.two{grid-template-columns:1fr}}
+.box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 18px}
+.box h3{margin:0 0 6px;font-size:1.02rem}
+.box p{margin:0;color:var(--muted);font-size:.96rem}
+.box b.big{display:block;font-size:1.5rem;color:var(--fg);font-variant-numeric:tabular-nums}
+.pair{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:22px 0;overflow:hidden}
+.pair h3{margin:0;padding:14px 18px;font-size:1.1rem;border-bottom:1px solid var(--line)}
+.pair h3 .k{color:var(--accent);margin-right:.4em}
+.cols{display:grid;grid-template-columns:1fr 1fr}
+@media (max-width:600px){.cols{grid-template-columns:1fr}}
+.col{padding:14px 18px}
+.col+.col{border-left:1px solid var(--line)}
+@media (max-width:600px){.col+.col{border-left:0;border-top:1px solid var(--line)}}
+.tag{display:inline-block;font-size:.78rem;font-weight:700;letter-spacing:.04em;border-radius:999px;padding:1px 10px;margin-bottom:6px}
+.tag.go{background:var(--go);color:var(--bg)}
+.tag.sw{background:var(--accent);color:var(--bg)}
+.col p{margin:6px 0;font-size:.97rem}
+.but{color:var(--muted)}
+.take{margin:0;padding:12px 18px;background:var(--soft);border-top:1px solid var(--line);font-weight:700}
+.q{font-size:1.15rem;padding:20px 22px;border:1px dashed var(--accent);border-radius:8px;margin:24px 0;font-weight:600}
+a{color:var(--accent)}
+footer{margin-top:56px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px;line-height:1.8}
+footer ul{padding-left:18px;margin:6px 0}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../">← 技術分享合集</a>
+<h1>後 AlphaGo 時代：職業棋士怎麼跟 AI 相處</h1>
+<div class="meta">10 分鐘技術分享｜圍棋這十年，對照軟體開發</div>
+
+<h2><span class="n">01</span>圍棋完了嗎？</h2>
+<p>2016 年 3 月，AlphaGo 在首爾 4 比 1 贏了李世乭。那時很多人說：圍棋完了，職業棋士要失業了。</p>
+<p>十年過去，圍棋沒有完，職業棋士也還在，但他們的工作方式整個變了。寫 code 的我們，大概正站在差不多的位置。</p>
+
+<h2><span class="n">02</span>兩個相反的反應</h2>
+<div class="two">
+<div class="box"><h3>李世乭，2019 年退休</h3><p>「就算我變成第一名，還有一個打不贏的存在。」他在 2016 年那五盤贏了一盤，第四盤第 78 手，是人類在正式比賽中唯一贏過 AlphaGo 的一盤。</p></div>
+<div class="box"><h3>PNAS 研究，2023</h3><b class="big">580 萬手</b><p>分析 1950 到 2021 年職業棋士的棋。AI 出現之後，人類下棋的品質變好了；以前沒人下過的新手變多，品質也比較高。</p></div>
+</div>
+<p class="pull">同一件事，有人覺得沒意義了，但整體來看，人類因為 AI 變強了。差別在於：把 AI 當對手，還是當教練。</p>
+
+<h2><span class="n">03</span>五個對照</h2>
+
+<section class="pair">
+<h3><span class="k">一</span>學 AI 棋譜 ↔ 讀 AI 寫的 code</h3>
+<div class="cols">
+<div class="col"><span class="tag go">圍棋</span>
+<p>職業棋士每天跟 AI 練棋，背 AI 的變化、模仿 AI 的下法。</p>
+<p class="but">但世界第一的申真諝說，他一開始照抄 AI 的手，常常打成亂戰，很容易輸。不懂為什麼，到了 AI 沒教過的局面就不會下。</p></div>
+<div class="col"><span class="tag sw">軟體</span>
+<p>AI 給的寫法常常比我們習慣的好，值得學。</p>
+<p class="but">看不懂就貼上去，上線出事的時候就收不了。</p></div>
+</div>
+<p class="take">學的是「為什麼這樣寫」，不是把它貼上。</p>
+</section>
+
+<section class="pair">
+<h3><span class="k">二</span>勝率表 ↔ 有依據的 review</h3>
+<div class="cols">
+<div class="col"><span class="tag go">圍棋</span>
+<p>直播畫面旁邊有一條 AI 勝率；下完覆盤，開 AI 看哪一手掉了多少。檢討從老師的感覺，變成每一手都有數字。</p>
+<p class="but">但勝率只說「這手不好」，不說為什麼。解說棋士的價值，變成把 AI 的判斷翻成人聽得懂的話。</p></div>
+<div class="col"><span class="tag sw">軟體</span>
+<p>AI review、lint、測試覆蓋率，就是我們的勝率表，標出哪裡可能有問題。</p>
+<p class="but">reviewer 的價值從「找出漏掉的 null」，移到「解釋這段在這個業務下為什麼會出事」。</p></div>
+</div>
+<p class="take">機器負責標出問題，人負責解釋為什麼。</p>
+</section>
+
+<section class="pair">
+<h3><span class="k">三</span>定式被改寫 ↔ 老規矩重新檢查</h3>
+<div class="cols">
+<div class="col"><span class="tag go">圍棋</span>
+<p>早期點三三，以前教科書說開局不要這樣下，送對方太多外勢。AlphaGo 下了改良版，職業棋士也開始跟著下。</p>
+<p class="but">但 2025 年一篇看了四百年棋譜的研究發現，AI 對開局的影響不大，也沒有持續很久。大部分基本功還是一樣。</p></div>
+<div class="col"><span class="tag sw">軟體</span>
+<p>「寫測試太花時間」「重寫太貴」這些前提，AI 讓它們變便宜了，有些規矩值得重新想。</p>
+<p class="but">但不是全部都要翻掉。</p></div>
+</div>
+<p class="take">重新檢查前提，不是全部推翻。</p>
+</section>
+
+<section class="pair">
+<h3><span class="k">四</span>AI 作弊 ↔ 責任在按下 merge 的人</h3>
+<div class="cols">
+<div class="col"><span class="tag go">圍棋</span>
+<p>2020 年，一位 13 歲的韓國職業棋士在網路比賽偷用 AI，贏了一位九段，因為下法跟 AI 太像被發現。她承認了，被禁賽一年。</p></div>
+<div class="col"><span class="tag sw">軟體</span>
+<p>我們的規則剛好相反：AI 可以用。但有一條一樣，結果是你的。誰 merge 誰負責；公司資料能不能貼給外部 AI，照公司規定。</p></div>
+</div>
+<p class="take">AI 可以幫你下，但輸贏算你的。</p>
+</section>
+
+<section class="pair">
+<h3><span class="k">五</span>讓二子贏 KataGo ↔ 人還在進步</h3>
+<div class="cols">
+<div class="col"><span class="tag go">圍棋</span>
+<p>2026 年 7 月，申真諝在讓二子的條件下，三盤 2 比 1 贏了 KataGo。韓國的解說說，跟 AI 一起練已經變成日常，人類才能一直進步。</p>
+<p class="but">是讓二子，AI 還是比人強；但差距在 AI 的幫助下變小了。</p></div>
+<div class="col"><span class="tag sw">軟體</span>
+<p>AI 不會變弱，我們也不用跟它比誰寫得快。</p>
+<p class="but">重點是跟它一起練，自己有沒有變強。</p></div>
+</div>
+<p class="take">不跟 AI 比，跟昨天的自己比。</p>
+</section>
+
+<h2>結尾</h2>
+<p>圍棋界花了十年，從「完了」走到「AI 是每天的教練」。我們大概在第二、三年。</p>
+<p class="q">如果 AI 是你的教練，這個月它教會你的一件事是什麼？想不到的話，可能我們還在照抄它的棋譜。</p>
+
+<footer>
+參考資料：
+<ul>
+<li>李世乭退休：<a href="https://www.scmp.com/news/asia/east-asia/article/3039617/googles-go-computer-cannot-be-beaten-so-south-korean-master-lee">SCMP，2019-11</a></li>
+<li>Shin, Kim, van Opheusden, Griffiths, <a href="https://arxiv.org/abs/2303.07462">Superhuman artificial intelligence can improve human decision-making by increasing novelty</a>, PNAS 2023</li>
+<li>點三三：<a href="https://deepmind.google/discover/blog/innovations-of-alphago/">DeepMind, Innovations of AlphaGo</a>，2017</li>
+<li>開局影響有限：<a href="https://www.cambridge.org/core/product/EB5A1737EC53BD5C642CF4C471668A75/core-reader">Cambridge，2025</a></li>
+<li>網路比賽 AI 作弊禁賽：<a href="https://www.koreatimes.co.kr/sports/20201123/go-player-cheated-using-ai">Korea Times，2020-11</a></li>
+<li>申真諝讓二子勝 KataGo：<a href="https://www.koreatimes.co.kr/lifestyle/people-events/20260721/humans-strike-back-shin-jin-seo-defeats-top-go-ai-katago-2-1">Korea Times</a>、<a href="https://www.koreajoongangdaily.com/sports/a-decade-after-alphago-shin-jinseo-proves-that-humans-still-have-game/12784059">JoongAng Daily</a>，2026-07</li>
+</ul>
+</footer>
+</main>
+</body>
+</html>
