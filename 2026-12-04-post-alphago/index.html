@@ -41,7 +41,11 @@ h2 .n{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:.4em}
 figure{margin:22px 0}
 figure svg{display:block;width:100%;height:auto}
 figcaption{color:var(--muted);font-size:.88rem;margin:6px 0 10px}
-.hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:20px}
+.hero{margin-top:20px}
+.photo img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line)}
+.side{display:grid;grid-template-columns:180px 1fr;gap:18px;align-items:start;margin:16px 0}
+@media (max-width:600px){.side{grid-template-columns:1fr}.side figure{max-width:220px}}
+.side figure{margin:0}
 .q{font-size:1.15rem;padding:20px 22px;border:1px dashed var(--accent);border-radius:8px;margin:24px 0;font-weight:600}
 a{color:var(--accent)}
 footer{margin-top:56px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px;line-height:1.8}
@@ -64,29 +68,7 @@ text{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",s
 <main>
 <a class="back" href="../">← 技術分享合集</a>
 
-<figure class="hero" aria-label="封面插圖：左邊是有黑白棋子的棋盤，右邊是程式碼視窗，下方一條勝率曲線">
-<svg viewBox="0 0 800 300" role="img">
-<title>棋盤、程式碼與勝率曲線</title>
-<rect class="s-wood" x="20" y="20" width="260" height="260" rx="8"/>
-<g class="s-grid">
-<line x1="40" y1="40" x2="260" y2="40"/><line x1="40" y1="67.5" x2="260" y2="67.5"/><line x1="40" y1="95" x2="260" y2="95"/><line x1="40" y1="122.5" x2="260" y2="122.5"/><line x1="40" y1="150" x2="260" y2="150"/><line x1="40" y1="177.5" x2="260" y2="177.5"/><line x1="40" y1="205" x2="260" y2="205"/><line x1="40" y1="232.5" x2="260" y2="232.5"/><line x1="40" y1="260" x2="260" y2="260"/>
-<line x1="40" y1="40" x2="40" y2="260"/><line x1="67.5" y1="40" x2="67.5" y2="260"/><line x1="95" y1="40" x2="95" y2="260"/><line x1="122.5" y1="40" x2="122.5" y2="260"/><line x1="150" y1="40" x2="150" y2="260"/><line x1="177.5" y1="40" x2="177.5" y2="260"/><line x1="205" y1="40" x2="205" y2="260"/><line x1="232.5" y1="40" x2="232.5" y2="260"/><line x1="260" y1="40" x2="260" y2="260"/>
-</g>
-<circle class="s-b" cx="95" cy="95" r="12"/><circle class="s-w" cx="205" cy="95" r="12"/><circle class="s-b" cx="205" cy="205" r="12"/><circle class="s-w" cx="95" cy="205" r="12"/><circle class="s-b" cx="150" cy="150" r="12"/><circle class="s-w" cx="177.5" cy="122.5" r="12"/><circle class="s-b" cx="122.5" cy="177.5" r="12"/><circle class="s-w" cx="67.5" cy="232.5" r="12"/>
-<rect class="s-card" x="320" y="20" width="460" height="190" rx="10"/>
-<circle class="s-badf" cx="340" cy="38" r="5"/><circle cx="356" cy="38" r="5" fill="#d9a43b"/><circle class="s-okf" cx="372" cy="38" r="5"/>
-<line class="s-line" x1="320" y1="54" x2="780" y2="54"/>
-<rect class="s-acc" x="342" y="72" width="70" height="10" rx="5"/><rect class="s-mut" x="420" y="72" width="140" height="10" rx="5" opacity=".5"/>
-<rect class="s-mut" x="362" y="96" width="190" height="10" rx="5" opacity=".5"/><rect class="s-acc" x="560" y="96" width="60" height="10" rx="5" opacity=".7"/>
-<rect class="s-mut" x="362" y="120" width="120" height="10" rx="5" opacity=".5"/><rect class="s-okf" x="490" y="120" width="90" height="10" rx="5" opacity=".8"/>
-<rect class="s-mut" x="382" y="144" width="220" height="10" rx="5" opacity=".5"/>
-<rect class="s-acc" x="342" y="168" width="40" height="10" rx="5"/><rect class="s-mut" x="390" y="168" width="100" height="10" rx="5" opacity=".5"/>
-<text class="s-mut" x="320" y="246" font-size="14">勝率</text>
-<line class="s-dash" x1="360" y1="262" x2="780" y2="262"/>
-<polyline class="s-curve" points="360,262 400,258 440,266 480,250 520,256 560,240 600,246 640,226 680,232 720,214 780,206"/>
-<circle class="s-acc" cx="780" cy="206" r="6"/>
-</svg>
-</figure>
+<figure class="hero photo"><img src="go-stones.jpg" alt="木頭棋盤上的黑白棋子特寫" width="1280" height="853"><figcaption>照片：Dietmar Rabich，CC BY-SA 4.0</figcaption></figure>
 
 <h1>後 AlphaGo 時代：職業棋士怎麼跟 AI 相處</h1>
 <div class="meta">10 分鐘技術分享｜圍棋這十年，對照軟體開發</div>
@@ -98,6 +80,10 @@ text{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",s
 <p>2016 年 3 月，AlphaGo 在首爾 4 比 1 贏了李世乭，很多人說圍棋完了。十年過去，圍棋沒有完，職業棋士也還在，只是工作方式整個變了。</p>
 
 <h2><span class="n">02</span>兩個相反的反應</h2>
+<div class="side">
+<figure class="photo"><img src="lee-sedol.jpg" alt="李世乭微笑的照片" width="367" height="550" loading="lazy"><figcaption>李世乭，2016。照片：LG Electronics，CC BY 2.0</figcaption></figure>
+<figure class="photo"><img src="game4-record.png" alt="李世乭對 AlphaGo 第四局完整棋譜，白 78 在棋盤中央" width="817" height="900" loading="lazy"><figcaption>2016 年第四局棋譜：李世乭執白，中央的白 78 就是那一手，AlphaGo 在第 180 手認輸。棋譜圖：Wesalius，CC BY-SA 4.0</figcaption></figure>
+</div>
 <div class="two">
 <div class="box"><h3>李世乭，2019 年退休</h3><p>「就算我變成第一名，還有一個打不贏的存在。」他在 2016 年那五盤贏了一盤，第四盤第 78 手，是人類在正式比賽中唯一贏過 AlphaGo 的一盤。</p></div>
 <div class="box"><h3>PNAS 研究，2023</h3><b class="big">580 萬手</b><p>分析 1950 到 2021 年職業棋士的棋。AI 出現之後，人類下棋的品質變好了；以前沒人下過的新手變多，品質也比較高。</p></div>
@@ -151,9 +137,9 @@ text{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",s
 <p class="but">但勝率只說「這手不好」，不說為什麼。解說棋士的價值，變成把 AI 的判斷翻成人聽得懂的話。</p></div>
 <div class="col"><span class="tag sw">軟體</span>
 <p>我們的勝率表是測試、型別檢查、上線後的監控。每改一次，就知道有沒有掉分：測試紅了、錯誤率升了、頁面變慢了。</p>
-<p class="but">沒有這張表，AI 改得再快，你也不知道是變好還是變壞。</p></div>
+<p class="but">沒有這張表，AI 改得再快，你也不知道是變好還是變壞，最後是自己半夜被叫起來。</p></div>
 </div>
-<p class="take">AI 寫得越快，越需要自己的勝率表。</p>
+<p class="take">勝率表是保護自己的：改壞了早點知道，就不用半夜救火。</p>
 </section>
 
 <section class="pair">
@@ -181,22 +167,22 @@ text{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",s
 <p>早期點三三，以前教科書說開局不要這樣下。AlphaGo 下了改良版，職業棋士也開始跟著下。</p>
 <p class="but">但 2025 年一篇看了四百年棋譜的研究發現，AI 對開局的影響不大，也沒有持續很久。大部分基本功還是一樣。</p></div>
 <div class="col"><span class="tag sw">軟體</span>
-<p>以前不寫測試，最常見的理由是「沒時間」。現在 AI 幾分鐘就能補一組測試，這條前提變了，所以該多寫，不是少寫。</p>
+<p>以前不寫測試，最常見的理由是「沒時間」。現在 AI 幾分鐘就能補一組測試，這條前提變了：測試可以讓 AI 多幫忙寫，省下來的時間是自己的。</p>
 <p class="but">基本功不變：測什麼、哪裡最容易出事，還是人決定。</p></div>
 </div>
 <p class="take">寫 code 變便宜了，寫測試也變便宜了。</p>
 </section>
 
 <section class="pair">
-<h3><span class="k">四</span>AI 作弊 ↔ 責任在按下 merge 的人</h3>
+<h3><span class="k">四</span>AI 作弊 ↔ 用 AI 也要有一套東西看局面</h3>
 <div class="cols">
 <div class="col"><span class="tag go">圍棋</span>
 <p>2020 年，一位 13 歲的韓國職業棋士在網路比賽偷用 AI，贏了一位九段，因為下法跟 AI 太像被發現。她承認了，被禁賽一年。</p></div>
 <div class="col"><span class="tag sw">軟體</span>
-<p>我們的規則剛好相反：AI 可以用。但有一條一樣，結果是你的。誰 merge 誰負責；公司資料能不能貼給外部 AI，照公司規定。</p>
-<p class="but">merge 前怎麼知道它是對的？三關：測試過、preview 自己點過、上線後有監控盯著。</p></div>
+<p>我們的規則剛好相反：AI 可以用。圍棋怕的是「看不出是誰下的」，我們怕的是「出事了不知道是哪裡壞的」。公司資料能不能貼給外部 AI，照公司規定。</p>
+<p class="but">這不是要一個人扛。merge 前有三關：測試、preview、上線後的監控，是流程幫大家一起擋，不是靠某個人眼睛特別利。</p></div>
 </div>
-<p class="take">AI 可以幫你下，但輸贏算你的。</p>
+<p class="take">AI 可以幫你下，但要有一套東西幫你看局面。</p>
 </section>
 
 <section class="pair">
@@ -206,10 +192,10 @@ text{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",s
 <p>2026 年 7 月，申真諝在讓二子的條件下，三盤 2 比 1 贏了 KataGo。韓國的解說說，跟 AI 一起練已經變成日常，人類才能一直進步。</p>
 <p class="but">是讓二子，AI 還是比人強；但差距在 AI 的幫助下變小了。</p></div>
 <div class="col"><span class="tag sw">軟體</span>
-<p>AI 不會變弱，我們也不用跟它比誰寫得快。</p>
-<p class="but">重點是跟它一起練，自己有沒有變強。</p></div>
+<p>AI 不會變弱，我們也不用跟它比誰寫得快，更不用為了追它每天加班學新東西。</p>
+<p class="but">挑一兩件重複、煩人的事交給它，省下來的時間拿回來。</p></div>
 </div>
-<p class="take">不跟 AI 比，跟昨天的自己比。</p>
+<p class="take">不用跟 AI 比，讓它幫你省時間就好。</p>
 </section>
 
 <h2><span class="n">04</span>AlphaGo 的兩個網路</h2>
@@ -238,9 +224,22 @@ text{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",s
 </figure>
 <p>AI 寫 code，等於給了我們一個很強的 policy。但「這樣改到底對不對」的 value，要靠我們自己建：測試、review、監控。</p>
 
+<h2><span class="n">05</span>新的定石</h2>
+<figure class="photo"><img src="playing-go.jpg" alt="有人伸手在棋盤上落子，前景是散落的黑白棋子" width="1280" height="853" loading="lazy"><figcaption>人還在下棋。照片：Loïc Lefebvre，CC BY-SA 4.0</figcaption></figure>
+<p>聽同學講完，我最大的感覺是：圍棋沒有因為 AI 變簡單，是變得更強了。新的定石一直出來，大家照著練，整體水準越來越高。</p>
+<p>軟體也會一樣，而且新的定石已經在長出來：</p>
+<ul>
+<li><b>交給 AI 之前，先寫好怎麼驗收。</b>不少開源專案給 AI 的規則檔，第一條就是先寫測試定義「完成」。</li>
+<li><b>review 分流：</b>核心改動人審，外圍改動交給 bot。</li>
+<li><b>驗證變成瓶頸：</b>2026 年一篇整理業界座談的論文說，AI 讓產生 code 變便宜之後，瓶頸從「寫出來」移到「確保它是對的」。</li>
+</ul>
+<p>再來是需求。人的慾望是無限的。寫 code 變便宜，需要的軟體不太會變少，比較可能變多：以前做不起的小工具、一次性的小系統，現在都做得起了。經濟學叫 Jevons 悖論：東西變便宜，用量反而變多。</p>
+<p>這件事還沒有定論。但我相信以後一定還會有新的轉變、新的需求；懂需求、懂哪裡會出事的人，工作不會消失。</p>
+<p class="pull">不用太焦慮。新的定石會出現，我們一起學就好。</p>
+
 <h2>結尾</h2>
-<p>圍棋界花了十年，從「完了」走到「AI 是每天的教練」。我們大概在第二、三年。</p>
-<p class="q">你負責的東西，有自己的勝率表嗎？改壞了，多久會知道？</p>
+<p>圍棋界花了十年，從「完了」走到「AI 是每天的教練」，還長出了新的定石。我們大概在第二、三年。</p>
+<p class="q">你負責的東西，有自己的勝率表嗎？改壞了，多久會知道？早點知道，下班就能安心一點。</p>
 
 <footer>
 參考資料：
@@ -251,9 +250,17 @@ text{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",s
 <li>點三三：<a href="https://deepmind.google/discover/blog/innovations-of-alphago/">DeepMind, Innovations of AlphaGo</a>，2017</li>
 <li>開局影響有限：<a href="https://www.cambridge.org/core/product/EB5A1737EC53BD5C642CF4C471668A75/core-reader">Cambridge，2025</a></li>
 <li>網路比賽 AI 作弊禁賽：<a href="https://www.koreatimes.co.kr/sports/20201123/go-player-cheated-using-ai">Korea Times，2020-11</a></li>
+<li>驗證變成瓶頸：<a href="https://arxiv.org/abs/2606.21894">Skills for the future software profession: beyond agentic AI!</a>，arXiv 2026</li>
+<li>coder 和 software engineer：<a href="https://cacm.acm.org/news/the-end-of-the-coder/">CACM, The End of the Coder?</a></li>
+<li>Jevons 悖論：<a href="https://simonwillison.net/2024/Jul/8/jevons-paradox/">Simon Willison，2024</a>、<a href="https://www.infoworld.com/article/3955073/ai-will-require-more-software-developers-not-fewer.html">InfoWorld</a>；反方：<a href="https://jimrutt.substack.com/p/jevons-paradox-and-the-fate-of-software">Jim Rutt</a></li>
 <li>申真諝讓二子勝 KataGo：<a href="https://www.koreatimes.co.kr/lifestyle/people-events/20260721/humans-strike-back-shin-jin-seo-defeats-top-go-ai-katago-2-1">Korea Times</a>、<a href="https://www.koreajoongangdaily.com/sports/a-decade-after-alphago-shin-jinseo-proves-that-humans-still-have-game/12784059">JoongAng Daily</a>，2026-07</li>
 </ul>
-配圖皆為示意圖，數字不代表真實對局或系統資料。
+照片與棋譜來自 Wikimedia Commons：
+<a href="https://commons.wikimedia.org/wiki/File:Go_--_2021_--_6746.jpg">Dietmar Rabich</a>（<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>）、
+<a href="https://commons.wikimedia.org/wiki/File:Lee_Se-Dol_-_2016_(cropped).jpg">LG Electronics</a>（<a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>）、
+<a href="https://commons.wikimedia.org/wiki/File:Lee_Sedol_(W)_vs_AlphaGo_(B)_-_Game_4.svg">Wesalius</a>（CC BY-SA 4.0）、
+<a href="https://commons.wikimedia.org/wiki/File:Simultaneous_baduk_games.jpg">Loïc Lefebvre</a>（CC BY-SA 4.0），未修改內容，只縮放尺寸。<br>
+勝率曲線、點三三、policy / value 為自製示意圖，數字不代表真實對局或系統資料。
 </footer>
 </main>
 </body>
