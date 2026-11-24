@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>後 AlphaGo 時代</title>
-<meta name="description" content="AlphaGo 之後十年，職業棋士怎麼跟 AI 相處：學 AI 棋譜、看勝率表、定式被改寫、AI 作弊、讓二子贏 KataGo，一件一件對照到軟體開發。">
+<meta name="description" content="AlphaGo 之後十年，職業棋士怎麼跟 AI 相處：學 AI 棋譜、看勝率表、定式被改寫、AI 作弊、讓二子贏 KataGo，一件一件對照到軟體開發，以及為什麼要多做測試、監控和驗證。">
 <style>
-:root{--bg:#fbfaf7;--fg:#1f1f1c;--muted:#6b6a64;--line:#e4e1d8;--card:#fff;--accent:#4f46b8;--go:#2b2a27;--soft:#f3f1ec}
-@media (prefers-color-scheme:dark){:root{--bg:#141320;--fg:#ecebf2;--muted:#a3a1b4;--line:#2c2a3d;--card:#1c1b2a;--accent:#a49cf5;--go:#ecebf2;--soft:#21203a}}
+:root{--bg:#fbfaf7;--fg:#1f1f1c;--muted:#6b6a64;--line:#e4e1d8;--card:#fff;--accent:#4f46b8;--go:#2b2a27;--soft:#f3f1ec;--wood:#e3c07e;--grid:#5a4626;--bad:#b4442f;--ok:#2f6f4f}
+@media (prefers-color-scheme:dark){:root{--bg:#141320;--fg:#ecebf2;--muted:#a3a1b4;--line:#2c2a3d;--card:#1c1b2a;--accent:#a49cf5;--go:#ecebf2;--soft:#21203a;--wood:#b8935a;--grid:#3a2c14;--bad:#ec8b76;--ok:#8fd1ac}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.8 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
 main{max-width:820px;margin:0 auto;padding:48px 16px 80px}
@@ -37,20 +37,62 @@ h2 .n{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:.4em}
 .col p{margin:6px 0;font-size:.97rem}
 .but{color:var(--muted)}
 .take{margin:0;padding:12px 18px;background:var(--soft);border-top:1px solid var(--line);font-weight:700}
+.pair figure{margin:0;padding:14px 18px 4px;border-bottom:1px solid var(--line)}
+figure{margin:22px 0}
+figure svg{display:block;width:100%;height:auto}
+figcaption{color:var(--muted);font-size:.88rem;margin:6px 0 10px}
+.hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:20px}
 .q{font-size:1.15rem;padding:20px 22px;border:1px dashed var(--accent);border-radius:8px;margin:24px 0;font-weight:600}
 a{color:var(--accent)}
 footer{margin-top:56px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px;line-height:1.8}
 footer ul{padding-left:18px;margin:6px 0}
+.s-wood{fill:var(--wood)}.s-grid{stroke:var(--grid);stroke-width:1.2}
+.s-b{fill:#1b1b1b}.s-w{fill:#f7f5ef;stroke:#555;stroke-width:1}
+.s-fg{fill:var(--fg)}.s-mut{fill:var(--muted)}.s-acc{fill:var(--accent)}
+.s-line{stroke:var(--line);stroke-width:1}
+.s-card{fill:var(--card);stroke:var(--line);stroke-width:1.5}
+.s-soft{fill:var(--soft)}
+.s-curve{fill:none;stroke:var(--accent);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.s-bad{fill:none;stroke:var(--bad);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.s-badf{fill:var(--bad)}.s-okf{fill:var(--ok)}
+.s-dash{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 5}
+.s-arrow{stroke:var(--accent);stroke-width:3;fill:none}
+text{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif}
 </style>
 </head>
 <body>
 <main>
 <a class="back" href="../">← 技術分享合集</a>
+
+<figure class="hero" aria-label="封面插圖：左邊是有黑白棋子的棋盤，右邊是程式碼視窗，下方一條勝率曲線">
+<svg viewBox="0 0 800 300" role="img">
+<title>棋盤、程式碼與勝率曲線</title>
+<rect class="s-wood" x="20" y="20" width="260" height="260" rx="8"/>
+<g class="s-grid">
+<line x1="40" y1="40" x2="260" y2="40"/><line x1="40" y1="67.5" x2="260" y2="67.5"/><line x1="40" y1="95" x2="260" y2="95"/><line x1="40" y1="122.5" x2="260" y2="122.5"/><line x1="40" y1="150" x2="260" y2="150"/><line x1="40" y1="177.5" x2="260" y2="177.5"/><line x1="40" y1="205" x2="260" y2="205"/><line x1="40" y1="232.5" x2="260" y2="232.5"/><line x1="40" y1="260" x2="260" y2="260"/>
+<line x1="40" y1="40" x2="40" y2="260"/><line x1="67.5" y1="40" x2="67.5" y2="260"/><line x1="95" y1="40" x2="95" y2="260"/><line x1="122.5" y1="40" x2="122.5" y2="260"/><line x1="150" y1="40" x2="150" y2="260"/><line x1="177.5" y1="40" x2="177.5" y2="260"/><line x1="205" y1="40" x2="205" y2="260"/><line x1="232.5" y1="40" x2="232.5" y2="260"/><line x1="260" y1="40" x2="260" y2="260"/>
+</g>
+<circle class="s-b" cx="95" cy="95" r="12"/><circle class="s-w" cx="205" cy="95" r="12"/><circle class="s-b" cx="205" cy="205" r="12"/><circle class="s-w" cx="95" cy="205" r="12"/><circle class="s-b" cx="150" cy="150" r="12"/><circle class="s-w" cx="177.5" cy="122.5" r="12"/><circle class="s-b" cx="122.5" cy="177.5" r="12"/><circle class="s-w" cx="67.5" cy="232.5" r="12"/>
+<rect class="s-card" x="320" y="20" width="460" height="190" rx="10"/>
+<circle class="s-badf" cx="340" cy="38" r="5"/><circle cx="356" cy="38" r="5" fill="#d9a43b"/><circle class="s-okf" cx="372" cy="38" r="5"/>
+<line class="s-line" x1="320" y1="54" x2="780" y2="54"/>
+<rect class="s-acc" x="342" y="72" width="70" height="10" rx="5"/><rect class="s-mut" x="420" y="72" width="140" height="10" rx="5" opacity=".5"/>
+<rect class="s-mut" x="362" y="96" width="190" height="10" rx="5" opacity=".5"/><rect class="s-acc" x="560" y="96" width="60" height="10" rx="5" opacity=".7"/>
+<rect class="s-mut" x="362" y="120" width="120" height="10" rx="5" opacity=".5"/><rect class="s-okf" x="490" y="120" width="90" height="10" rx="5" opacity=".8"/>
+<rect class="s-mut" x="382" y="144" width="220" height="10" rx="5" opacity=".5"/>
+<rect class="s-acc" x="342" y="168" width="40" height="10" rx="5"/><rect class="s-mut" x="390" y="168" width="100" height="10" rx="5" opacity=".5"/>
+<text class="s-mut" x="320" y="246" font-size="14">勝率</text>
+<line class="s-dash" x1="360" y1="262" x2="780" y2="262"/>
+<polyline class="s-curve" points="360,262 400,258 440,266 480,250 520,256 560,240 600,246 640,226 680,232 720,214 780,206"/>
+<circle class="s-acc" cx="780" cy="206" r="6"/>
+</svg>
+</figure>
+
 <h1>後 AlphaGo 時代：職業棋士怎麼跟 AI 相處</h1>
 <div class="meta">10 分鐘技術分享｜圍棋這十年，對照軟體開發</div>
 
 <h2><span class="n">01</span>圍棋完了嗎？</h2>
-<p>我有個同學下圍棋，六段。有天閒聊，我虧他：「李世乭都被 AlphaGo 打倒了，那你們現在下圍棋是在幹嘛？」</p>
+<p>我有個同學下圍棋，業餘六段。有天閒聊，我虧他：「李世乭都被 AlphaGo 打倒了，那你們現在下圍棋是在幹嘛？」</p>
 <p>本來以為他會很尷尬，結果他講了一大串：職業棋士現在怎麼跟 AI 練棋、直播怎麼看勝率、定式怎麼被改掉，講得頭頭是道。</p>
 <p class="pull">圍棋界已經走過一輪了。我相信軟體工程師，也會經過這樣一番轉變。</p>
 <p>2016 年 3 月，AlphaGo 在首爾 4 比 1 贏了李世乭，很多人說圍棋完了。十年過去，圍棋沒有完，職業棋士也還在，只是工作方式整個變了。</p>
@@ -71,36 +113,78 @@ footer ul{padding-left:18px;margin:6px 0}
 <p>職業棋士每天跟 AI 練棋，背 AI 的變化、模仿 AI 的下法。</p>
 <p class="but">但世界第一的申真諝說，他一開始照抄 AI 的手，常常打成亂戰，很容易輸。不懂為什麼，到了 AI 沒教過的局面就不會下。</p></div>
 <div class="col"><span class="tag sw">軟體</span>
-<p>AI 給的寫法常常比我們習慣的好，值得學。</p>
-<p class="but">看不懂就貼上去，上線出事的時候就收不了。</p></div>
+<p>AI 給的寫法常常比我們習慣的好，值得學。但看不懂就貼上去，上線出事的時候就收不了。</p>
+<p class="but">看懂最快的方法：先寫一個測試把它的行為釘住，再改一個地方，看哪裡會壞。</p></div>
 </div>
 <p class="take">學的是「為什麼這樣寫」，不是把它貼上。</p>
 </section>
 
 <section class="pair">
-<h3><span class="k">二</span>勝率表 ↔ 有依據的 review</h3>
+<h3><span class="k">二</span>勝率表 ↔ 測試和監控</h3>
+<figure aria-label="兩張示意圖：上面是對局勝率在某一手突然下降，下面是新版本上線後錯誤率突然升高">
+<svg viewBox="0 0 720 330" role="img">
+<title>勝率曲線與上線後錯誤率</title>
+<text class="s-fg" x="0" y="18" font-size="15" font-weight="700">對局勝率（示意）</text>
+<line class="s-line" x1="40" y1="40" x2="700" y2="40"/><line class="s-line" x1="40" y1="95" x2="700" y2="95"/><line class="s-line" x1="40" y1="150" x2="700" y2="150"/>
+<text class="s-mut" x="0" y="44" font-size="12">100%</text><text class="s-mut" x="8" y="99" font-size="12">50%</text><text class="s-mut" x="18" y="154" font-size="12">0%</text>
+<polyline class="s-curve" points="40,92 90,88 140,94 190,84 240,80 290,86 340,78 380,74 410,76"/>
+<polyline class="s-bad" points="410,76 430,118"/>
+<polyline class="s-curve" points="430,118 480,114 530,122 580,116 630,124 700,120"/>
+<circle class="s-badf" cx="430" cy="118" r="6"/>
+<text class="s-badf" x="442" y="72" font-size="14" font-weight="700">這一手 −38%</text>
+<text class="s-mut" x="40" y="172" font-size="12">第 1 手</text><text class="s-mut" x="640" y="172" font-size="12">第 200 手</text>
+<text class="s-fg" x="0" y="210" font-size="15" font-weight="700">上線後錯誤率（示意）</text>
+<line class="s-line" x1="40" y1="230" x2="700" y2="230"/><line class="s-line" x1="40" y1="300" x2="700" y2="300"/>
+<polyline class="s-curve" points="40,292 100,290 160,293 220,289 280,292 340,290 400,291"/>
+<line class="s-dash" x1="400" y1="222" x2="400" y2="304"/>
+<text class="s-mut" x="408" y="226" font-size="12">新版本上線</text>
+<polyline class="s-bad" points="400,291 420,250 460,244 500,252 540,246"/>
+<polyline class="s-curve" points="540,246 560,288 620,291 700,290"/>
+<text class="s-badf" x="470" y="238" font-size="13" font-weight="700">alert</text>
+<text class="s-mut" x="566" y="276" font-size="12">回滾</text>
+</svg>
+<figcaption>上：棋局的勝率曲線，哪一手下壞一眼就看得到。下：軟體的勝率表，是測試、型別檢查和上線後的監控。兩張都是示意圖。</figcaption>
+</figure>
 <div class="cols">
 <div class="col"><span class="tag go">圍棋</span>
 <p>直播畫面旁邊有一條 AI 勝率；下完覆盤，開 AI 看哪一手掉了多少。檢討從老師的感覺，變成每一手都有數字。</p>
 <p class="but">但勝率只說「這手不好」，不說為什麼。解說棋士的價值，變成把 AI 的判斷翻成人聽得懂的話。</p></div>
 <div class="col"><span class="tag sw">軟體</span>
-<p>AI review、lint、測試覆蓋率，就是我們的勝率表，標出哪裡可能有問題。</p>
-<p class="but">reviewer 的價值從「找出漏掉的 null」，移到「解釋這段在這個業務下為什麼會出事」。</p></div>
+<p>我們的勝率表是測試、型別檢查、上線後的監控。每改一次，就知道有沒有掉分：測試紅了、錯誤率升了、頁面變慢了。</p>
+<p class="but">沒有這張表，AI 改得再快，你也不知道是變好還是變壞。</p></div>
 </div>
-<p class="take">機器負責標出問題，人負責解釋為什麼。</p>
+<p class="take">AI 寫得越快，越需要自己的勝率表。</p>
 </section>
 
 <section class="pair">
-<h3><span class="k">三</span>定式被改寫 ↔ 老規矩重新檢查</h3>
+<h3><span class="k">三</span>定式被改寫 ↔ 「測試太貴」這條前提變了</h3>
+<figure aria-label="棋盤左下角，黑棋在星位，白棋點在三三">
+<svg viewBox="0 0 720 260" role="img">
+<title>點三三示意</title>
+<rect class="s-wood" x="20" y="10" width="240" height="240" rx="6"/>
+<g class="s-grid">
+<line x1="40" y1="30" x2="260" y2="30"/><line x1="40" y1="65" x2="260" y2="65"/><line x1="40" y1="100" x2="260" y2="100"/><line x1="40" y1="135" x2="260" y2="135"/><line x1="40" y1="170" x2="260" y2="170"/><line x1="40" y1="205" x2="260" y2="205"/><line x1="40" y1="230" x2="260" y2="230" stroke-width="2.5"/>
+<line x1="40" y1="10" x2="40" y2="230" stroke-width="2.5"/><line x1="75" y1="10" x2="75" y2="230"/><line x1="110" y1="10" x2="110" y2="230"/><line x1="145" y1="10" x2="145" y2="230"/><line x1="180" y1="10" x2="180" y2="230"/><line x1="215" y1="10" x2="215" y2="230"/><line x1="250" y1="10" x2="250" y2="230"/>
+</g>
+<circle class="s-b" cx="145" cy="135" r="15"/>
+<circle class="s-w" cx="110" cy="170" r="15"/>
+<text class="s-fg" x="300" y="60" font-size="16" font-weight="700">黑：星位　白：點三三</text>
+<text class="s-mut" x="300" y="94" font-size="14">以前：開局這樣下，送對方太多外勢</text>
+<text class="s-mut" x="300" y="120" font-size="14">AlphaGo 之後：改良版變成職業棋士的常用手</text>
+<text class="s-fg" x="300" y="172" font-size="16" font-weight="700">「測試太花時間」也是一條舊定式</text>
+<text class="s-mut" x="300" y="198" font-size="14">AI 幾分鐘就能補一組測試，前提變了</text>
+</svg>
+<figcaption>左下角的示意：黑棋在星位，白棋點進三三。</figcaption>
+</figure>
 <div class="cols">
 <div class="col"><span class="tag go">圍棋</span>
-<p>早期點三三，以前教科書說開局不要這樣下，送對方太多外勢。AlphaGo 下了改良版，職業棋士也開始跟著下。</p>
+<p>早期點三三，以前教科書說開局不要這樣下。AlphaGo 下了改良版，職業棋士也開始跟著下。</p>
 <p class="but">但 2025 年一篇看了四百年棋譜的研究發現，AI 對開局的影響不大，也沒有持續很久。大部分基本功還是一樣。</p></div>
 <div class="col"><span class="tag sw">軟體</span>
-<p>「寫測試太花時間」「重寫太貴」這些前提，AI 讓它們變便宜了，有些規矩值得重新想。</p>
-<p class="but">但不是全部都要翻掉。</p></div>
+<p>以前不寫測試，最常見的理由是「沒時間」。現在 AI 幾分鐘就能補一組測試，這條前提變了，所以該多寫，不是少寫。</p>
+<p class="but">基本功不變：測什麼、哪裡最容易出事，還是人決定。</p></div>
 </div>
-<p class="take">重新檢查前提，不是全部推翻。</p>
+<p class="take">寫 code 變便宜了，寫測試也變便宜了。</p>
 </section>
 
 <section class="pair">
@@ -109,7 +193,8 @@ footer ul{padding-left:18px;margin:6px 0}
 <div class="col"><span class="tag go">圍棋</span>
 <p>2020 年，一位 13 歲的韓國職業棋士在網路比賽偷用 AI，贏了一位九段，因為下法跟 AI 太像被發現。她承認了，被禁賽一年。</p></div>
 <div class="col"><span class="tag sw">軟體</span>
-<p>我們的規則剛好相反：AI 可以用。但有一條一樣，結果是你的。誰 merge 誰負責；公司資料能不能貼給外部 AI，照公司規定。</p></div>
+<p>我們的規則剛好相反：AI 可以用。但有一條一樣，結果是你的。誰 merge 誰負責；公司資料能不能貼給外部 AI，照公司規定。</p>
+<p class="but">merge 前怎麼知道它是對的？三關：測試過、preview 自己點過、上線後有監控盯著。</p></div>
 </div>
 <p class="take">AI 可以幫你下，但輸贏算你的。</p>
 </section>
@@ -127,20 +212,48 @@ footer ul{padding-left:18px;margin:6px 0}
 <p class="take">不跟 AI 比，跟昨天的自己比。</p>
 </section>
 
+<h2><span class="n">04</span>AlphaGo 的兩個網路</h2>
+<figure aria-label="左邊 policy：下一手下哪裡，AI 已經很強；右邊 value：局面好不好，要自己建測試、review、監控">
+<svg viewBox="0 0 720 250" role="img">
+<title>Policy 與 Value</title>
+<rect class="s-card" x="10" y="20" width="310" height="210" rx="14"/>
+<rect class="s-card" x="400" y="20" width="310" height="210" rx="14"/>
+<text class="s-acc" x="34" y="58" font-size="20" font-weight="700">Policy</text>
+<text class="s-fg" x="34" y="88" font-size="15">下一手下哪裡？</text>
+<line class="s-line" x1="34" y1="106" x2="296" y2="106"/>
+<text class="s-mut" x="34" y="136" font-size="14">寫 code 這一半</text>
+<text class="s-fg" x="34" y="166" font-size="16" font-weight="700">AI 已經很強</text>
+<text class="s-mut" x="34" y="194" font-size="14">下一手很快就想好了</text>
+<text class="s-acc" x="424" y="58" font-size="20" font-weight="700">Value</text>
+<text class="s-fg" x="424" y="88" font-size="15">現在局面好不好？</text>
+<line class="s-line" x1="424" y1="106" x2="686" y2="106"/>
+<text class="s-mut" x="424" y="136" font-size="14">驗證這一半</text>
+<text class="s-fg" x="424" y="166" font-size="16" font-weight="700">要自己建</text>
+<rect class="s-soft" x="424" y="180" width="56" height="28" rx="14"/><text class="s-fg" x="438" y="199" font-size="13">測試</text>
+<rect class="s-soft" x="488" y="180" width="70" height="28" rx="14"/><text class="s-fg" x="500" y="199" font-size="13">review</text>
+<rect class="s-soft" x="566" y="180" width="56" height="28" rx="14"/><text class="s-fg" x="580" y="199" font-size="13">監控</text>
+<path class="s-arrow" d="M330 125 L388 125"/><path class="s-arrow" d="M376 113 L390 125 L376 137"/>
+</svg>
+<figcaption>2016 年的 AlphaGo 有兩個網路：policy 想下一手，value 判斷局面，再加上搜尋（這裡簡化了）。</figcaption>
+</figure>
+<p>AI 寫 code，等於給了我們一個很強的 policy。但「這樣改到底對不對」的 value，要靠我們自己建：測試、review、監控。</p>
+
 <h2>結尾</h2>
 <p>圍棋界花了十年，從「完了」走到「AI 是每天的教練」。我們大概在第二、三年。</p>
-<p class="q">如果 AI 是你的教練，這個月它教會你的一件事是什麼？想不到的話，可能我們還在照抄它的棋譜。</p>
+<p class="q">你負責的東西，有自己的勝率表嗎？改壞了，多久會知道？</p>
 
 <footer>
 參考資料：
 <ul>
 <li>李世乭退休：<a href="https://thenextweb.com/artificial-intelligence/2019/11/27/world-champion-go-player-retires-ai-cannot-be-defeated/">The Next Web，2019-11</a></li>
 <li>Shin, Kim, van Opheusden, Griffiths, <a href="https://arxiv.org/abs/2303.07462">Superhuman artificial intelligence can improve human decision-making by increasing novelty</a>, PNAS 2023</li>
+<li>AlphaGo 的 policy 和 value network：Silver et al., <a href="https://www.nature.com/articles/nature16961">Mastering the game of Go with deep neural networks and tree search</a>, Nature 2016</li>
 <li>點三三：<a href="https://deepmind.google/discover/blog/innovations-of-alphago/">DeepMind, Innovations of AlphaGo</a>，2017</li>
 <li>開局影響有限：<a href="https://www.cambridge.org/core/product/EB5A1737EC53BD5C642CF4C471668A75/core-reader">Cambridge，2025</a></li>
 <li>網路比賽 AI 作弊禁賽：<a href="https://www.koreatimes.co.kr/sports/20201123/go-player-cheated-using-ai">Korea Times，2020-11</a></li>
 <li>申真諝讓二子勝 KataGo：<a href="https://www.koreatimes.co.kr/lifestyle/people-events/20260721/humans-strike-back-shin-jin-seo-defeats-top-go-ai-katago-2-1">Korea Times</a>、<a href="https://www.koreajoongangdaily.com/sports/a-decade-after-alphago-shin-jinseo-proves-that-humans-still-have-game/12784059">JoongAng Daily</a>，2026-07</li>
 </ul>
+配圖皆為示意圖，數字不代表真實對局或系統資料。
 </footer>
 </main>
 </body>
