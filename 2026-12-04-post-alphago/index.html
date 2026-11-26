@@ -204,31 +204,35 @@ text{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",s
 <p class="take">不用跟 AI 比，讓它接手重複的事就好。</p>
 </section>
 
-<h2><span class="n">04</span>AlphaGo 的兩個網路</h2>
-<figure aria-label="左邊 policy：下一手下哪裡，AI 已經很強；右邊 value：局面好不好，要自己建測試、review、監控">
+<h2><span class="n">04</span>AlphaGo 腦中的兩個角色</h2>
+<p>AlphaGo 下棋時，腦中有兩個角色：一個負責<b>出主意</b>，很快列出幾個「下這裡不錯」的候選；一個負責<b>看局面</b>，判斷每一手下完之後是好是壞。前面講的勝率表，就是「看局面」這個角色算出來的。</p>
+<figure aria-label="左邊是出主意：下一手可以下哪裡，軟體這邊是 AI 寫 code；右邊是看局面：這手下完局面好不好，軟體這邊是測試、review、監控">
 <svg viewBox="0 0 720 250" role="img">
-<title>Policy 與 Value</title>
+<title>出主意與看局面</title>
 <rect class="s-card" x="10" y="20" width="310" height="210" rx="14"/>
 <rect class="s-card" x="400" y="20" width="310" height="210" rx="14"/>
-<text class="s-acc" x="34" y="58" font-size="20" font-weight="700">Policy</text>
-<text class="s-fg" x="34" y="88" font-size="15">下一手下哪裡？</text>
+<text class="s-acc" x="34" y="58" font-size="20" font-weight="700">出主意</text>
+<text class="s-mut" x="104" y="58" font-size="13">policy</text>
+<text class="s-fg" x="34" y="88" font-size="15">下一手可以下哪裡？</text>
 <line class="s-line" x1="34" y1="106" x2="296" y2="106"/>
-<text class="s-mut" x="34" y="136" font-size="14">寫 code 這一半</text>
-<text class="s-fg" x="34" y="166" font-size="16" font-weight="700">AI 已經很強</text>
-<text class="s-mut" x="34" y="194" font-size="14">下一手很快就想好了</text>
-<text class="s-acc" x="424" y="58" font-size="20" font-weight="700">Value</text>
-<text class="s-fg" x="424" y="88" font-size="15">現在局面好不好？</text>
+<text class="s-mut" x="34" y="136" font-size="14">軟體這邊</text>
+<text class="s-fg" x="34" y="166" font-size="16" font-weight="700">AI 寫 code</text>
+<text class="s-mut" x="34" y="194" font-size="14">很快就給出好幾種寫法</text>
+<text class="s-acc" x="424" y="58" font-size="20" font-weight="700">看局面</text>
+<text class="s-mut" x="494" y="58" font-size="13">value</text>
+<text class="s-fg" x="424" y="88" font-size="15">這手下完，局面好不好？</text>
 <line class="s-line" x1="424" y1="106" x2="686" y2="106"/>
-<text class="s-mut" x="424" y="136" font-size="14">驗證這一半</text>
-<text class="s-fg" x="424" y="166" font-size="16" font-weight="700">要自己建</text>
+<text class="s-mut" x="424" y="136" font-size="14">軟體這邊</text>
+<text class="s-fg" x="424" y="166" font-size="16" font-weight="700">我們自己建</text>
 <rect class="s-soft" x="424" y="180" width="56" height="28" rx="14"/><text class="s-fg" x="438" y="199" font-size="13">測試</text>
 <rect class="s-soft" x="488" y="180" width="70" height="28" rx="14"/><text class="s-fg" x="500" y="199" font-size="13">review</text>
 <rect class="s-soft" x="566" y="180" width="56" height="28" rx="14"/><text class="s-fg" x="580" y="199" font-size="13">監控</text>
 <path class="s-arrow" d="M330 125 L388 125"/><path class="s-arrow" d="M376 113 L390 125 L376 137"/>
 </svg>
-<figcaption>2016 年的 AlphaGo 有兩個網路：policy 想下一手，value 判斷局面，再加上搜尋（這裡簡化了）。</figcaption>
+<figcaption>名詞對照：出主意的是 policy network，看局面的是 value network。2016 年的 AlphaGo 還會往後多算幾步（搜尋），這裡簡化了。</figcaption>
 </figure>
-<p>AI 寫 code，等於給了我們一個很強的 policy。但「這樣改到底對不對」的 value，要靠我們自己建：測試、review、監控。</p>
+<p>只會出主意、不會看局面，就是亂下；兩個角色一起，才下得贏。</p>
+<p>軟體也一樣。AI 寫 code，像一個很會出主意的角色；「這樣改完到底對不對」這個看局面的角色，現在還是靠我們的測試、review 和監控。</p>
 
 <h2><span class="n">05</span>新的定石</h2>
 <figure class="photo"><img src="playing-go.jpg" alt="有人伸手在棋盤上落子，前景是散落的黑白棋子" width="1280" height="853" loading="lazy"><figcaption>人還在下棋。照片：Loïc Lefebvre，CC BY-SA 4.0</figcaption></figure>
@@ -266,7 +270,7 @@ text{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",s
 <a href="https://commons.wikimedia.org/wiki/File:Lee_Se-Dol_-_2016_(cropped).jpg">LG Electronics</a>（<a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>）、
 <a href="https://commons.wikimedia.org/wiki/File:Lee_Sedol_(W)_vs_AlphaGo_(B)_-_Game_4.svg">Wesalius</a>（CC BY-SA 4.0）、
 <a href="https://commons.wikimedia.org/wiki/File:Simultaneous_baduk_games.jpg">Loïc Lefebvre</a>（CC BY-SA 4.0）、<a href="https://commons.wikimedia.org/wiki/File:KataGoanalisis.png">Juscelk</a>（CC BY-SA 4.0），未修改內容，只縮放尺寸。<br>
-勝率曲線、點三三、policy / value 為自製示意圖，數字不代表真實對局或系統資料。
+勝率曲線、點三三、出主意 / 看局面為自製示意圖，數字不代表真實對局或系統資料。
 </footer>
 </main>
 </body>
